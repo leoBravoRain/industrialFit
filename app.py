@@ -74,15 +74,15 @@ def main():
 
                 # Do all computing to get the prediction time
                 
-                # PASTE CODE HERE
+                # distName = "beta"
+                distName = ['alpha', 'beta', 'expon', 'gamma', 'norm', 'rayleigh']
+                distName  = distName[3]
 
                 y = data.iloc[:, 0]
-                print(y.shape)
 
                 # Specify the sample size
                 size = data.shape[0]
                 x = scipy.arange(size)
-                print(x.shape)
 
                 # get prediction time
                 predictionTime = 15
@@ -91,7 +91,7 @@ def main():
                 # Step 3: Obtain the distribution parameters
 
                 # Define the distribution with the best fit
-                dist = getattr(scipy.stats, 'gamma')
+                dist = getattr(scipy.stats, distName)
 
                 # Fit the distribution to the data
                 param = dist.fit(y)
@@ -104,19 +104,42 @@ def main():
 
                 # Scale parameter
                 scale = param[-1]
-
                 # display results
+                st.markdown("""
+                        ### Tiempos de falla
+                """)
                 st.markdown("Probability of failure before time 300: " + str(round(scipy.stats.gamma.cdf(user_input, *args, loc=loc, scale=scale)*100,2)) + "%")
 
                 st.markdown("Reliability Estimation at time 300: " + str(round(scipy.stats.gamma.sf(user_input, *args, loc=loc, scale=scale)*100,2)) + "%")
 
                 st.markdown("Probability density function at time 300: " + str(round(scipy.stats.gamma.pdf(user_input, *args, loc=loc, scale=scale)*100,2)))
 
-                # print("Probability of failure before time 300:", round(scipy.stats.gamma.cdf(300, *args, loc=loc, scale=scale)*100,2),"%")
+                # display chart
+                st.markdown("""
+                        ### Distribución de tiempo de falla
+                """)
+                fig, ax = plt.subplots()
+                ax.hist(y, density = False)
+                plt.title("Failure Times Distribution Empirical")
+                plt.xlabel("Failure Time")
+                plt.ylabel("Frequency")
+                # h = plt.hist(y, density = False, bins = 51)
+                st.pyplot(fig)
 
-                # print("Reliability Estimation at time 300:", round(scipy.stats.gamma.sf(300, *args, loc=loc, scale=scale)*100,2),"%")
+                # fitted distribution
+                pdf_fitted = dist.pdf(x, *param[:-2], loc=param[-2], scale=param[-1])
+                fig, ax = plt.subplots()
+                ax.plot(pdf_fitted)
+                plt.xlim(100, 500) 
+                # plt.legend(loc='upper left')
+                plt.title("Failure Times Distribution Theorical")
+                plt.xlabel("Failure Time")
+                plt.ylabel("Frequency")
+                # plt.show()
+                st.pyplot(fig)
 
-                # print("Probability density function at time 300", round(scipy.stats.gamma.pdf(300, *args, loc=loc, scale=scale)*100,2))
+
+
 
 if __name__ == "__main__":
     main()
