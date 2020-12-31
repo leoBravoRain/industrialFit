@@ -61,7 +61,8 @@ def main():
     uploaded_file = st.sidebar.file_uploader('Sube el archivo: ', type='csv', encoding='auto', key=None)
     st.set_option('deprecation.showfileUploaderEncoding', False)
 
-    user_input = st.sidebar.number_input("Tiempo a analizar: ", 0.0)
+#     user_input = st.sidebar.number_input("Tiempo a analizar: ", 0.0)
+    user_input = 400
 
     if uploaded_file is not None:
 
@@ -70,25 +71,18 @@ def main():
 
         # get time
         # if st.sidebar.checkbox("Obtener tiempo de falla"):
-        if st.sidebar.button("Obtener tiempo de falla"):
+        if st.sidebar.button("Analizar tiempos de falla"):
 
-                # Do all computing to get the prediction time
-                
-                # distName = "beta"
-                distName = ['alpha', 'beta', 'expon', 'gamma', 'norm', 'rayleigh']
-                distName  = distName[3]
-
+                # get data
                 y = data.iloc[:, 0]
-
                 # Specify the sample size
                 size = data.shape[0]
                 x = scipy.arange(size)
 
-                # get prediction time
-                predictionTime = 15
 
-
-                # Step 3: Obtain the distribution parameters
+                # Obtain the distribution parameters
+                distName = ['alpha', 'beta', 'expon', 'gamma', 'norm', 'rayleigh']
+                distName  = distName[2]
 
                 # Define the distribution with the best fit
                 dist = getattr(scipy.stats, distName)
@@ -104,41 +98,45 @@ def main():
 
                 # Scale parameter
                 scale = param[-1]
+
+                # get results
+
+                # 3) Mean failure time
+                # This is the mean of the distirubtion
+                meanFailureTime = dist.mean(loc = loc, scale = scale)
                 # display results
                 st.markdown("""
                         ### Tiempos de falla
                 """)
-                st.markdown("Probability of failure before time 300: " + str(round(scipy.stats.gamma.cdf(user_input, *args, loc=loc, scale=scale)*100,2)) + "%")
+                st.markdown("Tiempo medio de falla: " + str(round(meanFailureTime, 2)))
 
-                st.markdown("Reliability Estimation at time 300: " + str(round(scipy.stats.gamma.sf(user_input, *args, loc=loc, scale=scale)*100,2)) + "%")
+                # get data to plot
+                a = np.arange(0, 2000)
 
-                st.markdown("Probability density function at time 300: " + str(round(scipy.stats.gamma.pdf(user_input, *args, loc=loc, scale=scale)*100,2)))
+                # 1) getting confiability of times
+                # probabily that the machine is operating without failure until that time
+                reliability = scipy.stats.expon.sf(a, *args, loc=loc, scale=scale)
 
-                # display chart
-                st.markdown("""
-                        ### Distribución de tiempo de falla
-                """)
-                fig, ax = plt.subplots()
-                ax.hist(y, density = False)
-                plt.title("Failure Times Distribution Empirical")
-                plt.xlabel("Failure Time")
-                plt.ylabel("Frequency")
-                # h = plt.hist(y, density = False, bins = 51)
+                # 2) failure rate 
+                # how many failures will be at an specific time
+                failureRate = scipy.stats.expon.pdf(a, *args, loc=loc, scale=scale) / scipy.stats.expon.sf(a, *args, loc=loc, scale=scale)
+
+
+                fig, ax = plt.subplots(2, 1, tight_layout = True)
+
+                # reliability
+                ax[0].plot(a, reliability, label = "reliability")
+                ax[0].set_title("Confiabilidad")
+                ax[0].set_xlabel("Tiempo")
+                ax[0].set_ylabel("Confiabilidad %")
+
+                # failure rate
+                ax[1].plot(a, failureRate, label = "failure rate")
+                ax[1].set_title("Tasa de falla")
+                ax[1].set_xlabel("Tiempo")
+                ax[1].set_ylabel("Tasa de falla")
+
                 st.pyplot(fig)
-
-                # fitted distribution
-                pdf_fitted = dist.pdf(x, *param[:-2], loc=param[-2], scale=param[-1])
-                fig, ax = plt.subplots()
-                ax.plot(pdf_fitted)
-                plt.xlim(100, 500) 
-                # plt.legend(loc='upper left')
-                plt.title("Failure Times Distribution Theorical")
-                plt.xlabel("Failure Time")
-                plt.ylabel("Frequency")
-                # plt.show()
-                st.pyplot(fig)
-
-
 
 
 if __name__ == "__main__":
