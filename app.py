@@ -106,9 +106,27 @@ def main():
                 meanFailureTime = dist.mean(loc = loc, scale = scale)
                 # display results
                 st.markdown("""
-                        ### Tiempos de falla
+                        ### Tiempo medio de falla
                 """)
-                st.markdown("Tiempo medio de falla: " + str(round(meanFailureTime, 2)))
+                st.markdown("Tiempo: " + str(round(meanFailureTime, 2)))
+
+                # failure probabilities
+                b = np.linspace(start=0, stop=2000, num=5, dtype = "int")
+                c = np.zeros(shape = (5, 2))                
+
+                # print(b.shape)
+                # print(c.shape)
+
+                for i in range(b.shape[0]):
+                        # print(i)
+                        # st.markdown("Probabilidad de falla al tiempo " + str(b[i]) + ": " + str(round(scipy.stats.expon.cdf(b[i], *args, loc=loc, scale=scale)*100,2)) + " %")
+                        c[i, 0] = b[i]
+                        c[i, 1] = round(scipy.stats.expon.cdf(b[i], *args, loc=loc, scale=scale)*100, 2)
+
+                st.markdown("""
+                        ### Probabilidades de falla a diferentes tiempos
+                """)
+                st.dataframe(pd.DataFrame(data = c, columns = ["Tiempo", "Probabilidad falla [%]"]))
 
                 # get data to plot
                 a = np.arange(0, 2000)
@@ -135,6 +153,10 @@ def main():
                 ax[1].set_title("Tasa de falla")
                 ax[1].set_xlabel("Tiempo")
                 ax[1].set_ylabel("Tasa de falla")
+
+                st.markdown("""
+                        ### Gráficos
+                """)
 
                 st.pyplot(fig)
 
